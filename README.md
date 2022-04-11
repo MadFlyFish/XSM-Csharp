@@ -1,11 +1,14 @@
 # XSM-Csharp
-A ure Csharp Porting of XSM Extended State Machine for Godot. It still needs to be polished but it works now. I will keep up maintaining.
+A pure Csharp Porting of XSM Extended State Machine for Godot. It still needs to be polished but it works now. I will keep up maintaining.
 
 
 Thanks to the useful work done by Etienne Blanc.
 https://gitlab.com/atnb/xsm
 
 Here's the original guide. It may help you To start use it.
+
+There's slight difference compared to the origin GDS version
+* PascalCase is used instead of the snake_case used in GDScript.
 
 
 XSM Extended State Machine
