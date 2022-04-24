@@ -1,25 +1,28 @@
+using System;
 using Godot;
 using Godot.Collections;
+using Array = Godot.Collections.Array;
 
 namespace Reversion.Module.Xsm;
 
 /// 所有的状态节点的父类，包括状态根节点StateRoot
-public class State : Node
+public class State<TTarget> : Node
+    where TTarget: Node
 {
     /// 进入状态时触发
-    [Signal] public delegate void StateEntered(State sender);
+    [Signal] public delegate void StateEntered(State<TTarget> sender);
     /// 退出状态时触发
-    [Signal] public delegate void StateExited(State sender);
+    [Signal] public delegate void StateExited(State<TTarget> sender);
     /// 更新状态时触发
-    [Signal] public delegate void StateUpdated(State sender);
+    [Signal] public delegate void StateUpdated(State<TTarget> sender);
     /// 改变状态时触发
-    [Signal] public delegate void StateChanged(State sender, State newState);
+    [Signal] public delegate void StateChanged(State<TTarget> sender, State<TTarget> newState);
     /// 进入子状态时触发
-    [Signal] public delegate void SubStateEntered(State sender);
+    [Signal] public delegate void SubStateEntered(State<TTarget> sender);
     /// 离开子状态时触发
-    [Signal] public delegate void SubStateExited(State sender);
+    [Signal] public delegate void SubStateExited(State<TTarget> sender);
     /// 子状态改变时触发
-    [Signal] public delegate void SubStateChanged(State sender, State newState);
+    [Signal] public delegate void SubStateChanged(State<TTarget> sender, State<TTarget> newState);
     /// 禁用时触发
     [Signal] public delegate void Disabled();
     /// 启用时触发
@@ -27,14 +30,15 @@ public class State : Node
 
     /// 是否禁用
     [Export] public bool IsDisabled {set; get;} 
-    // 是否可同时激活或者未激活子节点（类似行为树的平行节点）
+    /// 是否可同时激活或者未激活子节点（类似行为树的平行节点）
     [Export] public bool HasRegions {set; get;}
     /// 调试打印模式
     [Export] public bool DebugMode {set; get;}
-    // 状态机作用的主体的节点路径，每个State可单独指定FsmOwner
-    [Export] public NodePath FsmOwner {set; get; }
+    // /// 状态机作用的主体的节点路径，每个State可单独指定FsmOwner
+    // [Export] public NodePath FsmOwner {set; get; }
     /// 动画器的节点路径
     [Export] public NodePath AnimationPlayer {set; get;}
+    
 
     /// 节点状态类型枚举:未激活，正在进入，已激活，正在退出。
     protected enum StatusType 
@@ -47,16 +51,19 @@ public class State : Node
     /// 初始状态为未激活
     protected StatusType Status{set; get;} = StatusType.Inactive;
     /// 状态根节点
-    protected StateRoot StateRoot{set; get;}
+    protected StateRoot<TTarget> StateRoot{set; get;}
     /// 作用主体（注意：可不指定，默认用状态根节点的Target）
-    protected Node Target{set; get;}
+    protected TTarget Target{set; get;}
     /// 动画器
     private AnimationPlayer AnimPlayer{set; get;}
-    private State LastState{set; get;}
+    /// 某个状态的的上一个状态 
+    private State<TTarget> LastState{set; get;}
+    /// 本帧是否已经完成？
     private bool DoneForThisFrame { set; get; }
+    /// 是否处在更新中
     protected bool StateInUpdate { set; get; }
 
-    // 初始化状态
+    /// 初始化状态
     public override void _Ready()
     {
         // 如是编辑器Tool模式，则不做任何处理。
@@ -65,10 +72,10 @@ public class State : Node
             return;
         }
         // 取得作用主体
-        if (FsmOwner != null)
-        {
-            Target = GetNode<Node>(FsmOwner);
-        }
+        // if (FsmOwner != null)
+        // {
+        //     Target = GetNode<TTarget>(FsmOwner);
+        // }
         // 取得动画器
         if (AnimationPlayer != null)
         {
@@ -76,19 +83,18 @@ public class State : Node
         }
     }
 
-    // 提供节点结构检查并警告（但在c#下貌似不工作）
+    /// 提供节点结构检查并警告（但在c#下貌似不工作）
     public override string _GetConfigurationWarning()
     {
-        foreach (dynamic c in GetChildren())
+        foreach (Node c in GetChildren())
         {
-            if (c.GetClass() != "State")
+            if (c is not State<TTarget>)
             {
                 return $"错误：有一个非State类型的子节点：  {c.Name}";
             }
         }
         return "";
     }
-    
     
     //
     // 可Override的几个虚方法
@@ -105,12 +111,12 @@ public class State : Node
         
     }
     
-    protected virtual void _OnUpdate(dynamic args)
+    protected virtual void _OnUpdate(float delta)
     {
         
     }
     
-    protected virtual void _AfterUpdate(dynamic args)
+    protected virtual void _AfterUpdate(float delta)
     {
         
     }
@@ -125,7 +131,7 @@ public class State : Node
         
     }
     
-    // 定时器时间到了触发
+    //. 定时器时间到了触发
     protected virtual void _OnTimeout(string name)
     {
         
@@ -137,8 +143,8 @@ public class State : Node
     //
     
     
-    /// 最重要的公共方法：切换状态，并且携带四个进出相关的参数，传递给对应的可复写方法。
-    public State ChangeState(string newState, dynamic argsOnEnter = null, dynamic argsAfterEnter = null, dynamic argsBeforeExit = null, dynamic argsOnExit = null)
+    /// 最重要的公共方法：切换状态，并且携带四个进出相关的参数，传递给对应的可复写方法。（要注意到这里是汇总到一个待激活状态列表中，不是立马切换的）
+    protected State<TTarget> ChangeState(string newState, dynamic argsOnEnter = null, dynamic argsAfterEnter = null, dynamic argsBeforeExit = null, dynamic argsOnExit = null)
     {
         if (!StateRoot.StateInUpdate)
         {
@@ -201,7 +207,7 @@ public class State : Node
         // If ENTERED, change the status to ACTIVE
         commonRoot.EnterChildren(argsOnEnter, argsAfterEnter);
         
-        // sets this State as last_state for the new one
+        // 将自身设为下一个状态的“前一个状态”。
         newStateNode.LastState = this;
         
         // set "done this frame" to avoid another round of state change in this branch
@@ -216,7 +222,7 @@ public class State : Node
             newStateNode.GetParent().EmitSignal(nameof(SubStateChanged), this, newStateNode);
         }
         // 状态根节点发出“子状态发生变化”的信号，并携带旧/新两个状态作为参数
-        StateRoot.EmitSignal(nameof(StateRoot.SomeStateChanged), this, newStateNode);
+        // StateRoot.EmitSignal(nameof(StateRoot.SomeStateChanged), this, newStateNode);
 
         if (DebugMode)
         {
@@ -226,14 +232,8 @@ public class State : Node
         return newStateNode;
     }
     
-    /// ChangeState方法的不带其他参数的精简版本
-    public void GotoState(string newState)
-    {
-        ChangeState(newState);
-    }
-
-    
-    public State ChangeStateIf(string newState, string ifState)
+    /// 如果某个其他状态已激活，则切换到特定状态
+    public State<TTarget> ChangeStateIf(string newState, string ifState)
     {
         var s = FindStateNode(ifState);
         if (s == null || s.Status == StatusType.Active)
@@ -243,10 +243,10 @@ public class State : Node
         return null;
     }
 
-    
-    public bool HasParent(State stateNode)
+    /// 用途不明：判断某个状态是否是另一状态的父节点（或者更上几层）。
+    public bool HasParent(State<TTarget> stateNode)
     {
-        var parent = GetParent<State>();
+        var parent = GetParent<State<TTarget>>();
         if (parent == stateNode)
         {
             return true;
@@ -270,14 +270,14 @@ public class State : Node
         return s.Status == StatusType.Active;
     }
     
-    // 获取一个节点在上一帧的激活状态。
+    /// 获取一个节点在上一帧的激活状态。
     public bool WasActive(string stateName, int historyId = 0)
     {
         return StateRoot.WasStateActive(stateName, historyId);
     }
 
     /// 获取已激活的子状态（如果HasRegions为true，则返回全部的已激活的子状态。）
-    public dynamic GetActiveSubState()
+    protected dynamic GetActiveSubState()
     {
         if (HasRegions && Status == StatusType.Active)
         {
@@ -297,19 +297,19 @@ public class State : Node
     }
 
     /// FindStateNode的别名：通过状态名获取状态节点
-    public State GetState(string stateName)
+    public State<TTarget> GetState(string stateName)
     {
         return FindStateNode(stateName);
     }
     
     /// 获取整个XSM状态机的已激活状态
-    public Dictionary GetActiveStates()
+    public Dictionary<string, State<TTarget>> GetActiveStates()
     {
         return StateRoot.ActiveStates;
     }
 
     /// 简单播放动画器里的某个动画。
-    private void Play(string anim, float customSpeed = 1.0f, bool fromEnd = false)
+    protected void Play(string anim, float customSpeed = 1.0f, bool fromEnd = false)
     {
         if (Status == StatusType.Active && AnimPlayer != null && AnimPlayer.HasAnimation(anim))
         {
@@ -385,7 +385,7 @@ public class State : Node
     }
     
     /// 判断某个动画是否正在播放。
-    public bool IsPlaying(string anim)
+    protected bool IsPlaying(string anim)
     {
         if (AnimPlayer != null)
         {
@@ -403,7 +403,7 @@ public class State : Node
         timer.Name = name;
         timer.OneShot = true;
         timer.Start(time);
-        timer.Connect("timeout", this, nameof(OnTimerTimeout));
+        timer.Connect("timeout", this, nameof(OnTimerTimeout), new Array {name});
         return timer;
     }
 
@@ -444,15 +444,15 @@ public class State : Node
     //
     
     
-    protected void InitChildrenStateMap(Dictionary<string, State> dict, State newStateRoot)
+    protected void InitChildrenStateMap(Dictionary<string, State<TTarget>> dict, State<TTarget> newStateRoot)
     {
-        StateRoot = newStateRoot as StateRoot;
+        StateRoot = newStateRoot as StateRoot<TTarget>;
         foreach (dynamic c in GetChildren())
         {
             if (dict.ContainsKey(c.Name))
             {
                 var currState = dict[c.Name];
-                var currParent = currState!.GetParent() as State;
+                var currParent = currState!.GetParent() as State<TTarget>;
                 dict.Remove(c.Name);
                 dict[$"{currParent!.Name}/{c.Name}"] = currState;
                 dict[$"{Name}/{c.Name}"] = c;
@@ -471,31 +471,33 @@ public class State : Node
         }
     }
 
-    protected void InitChildrenStates(State rootState, bool firstBranch)
+    protected void InitChildrenStates(State<TTarget> rootState, bool firstBranch)
     {
-        foreach (dynamic c in GetChildren())
+        foreach (var c in GetChildren())
         {
-            if (c.GetClass() == "State")
+            if (c is State<TTarget> state)
             {
-                c.Status = StatusType.Inactive;
-                c.StateRoot = rootState as StateRoot;
-                c.Target ??= rootState.Target;
-                c.AnimPlayer ??= rootState.AnimPlayer;
-                if (firstBranch && (HasRegions || c == GetChild(0)))
+                state.Status = StatusType.Inactive;
+                state.StateRoot = rootState as StateRoot<TTarget>;
+
+                state.Target ??= rootState.Target; //  null 合并赋值运算符：如果Target为空，则采用根节点的Target
+                state.AnimPlayer ??= rootState.AnimPlayer; //  null 合并赋值运算符：如果AnimPlayer为空，则采用根节点的AnimPlayer
+                if (firstBranch && (HasRegions || state == GetChild(0)))
                 {
-                    c.Enter();
-                    c.LastState = rootState;
-                    c.InitChildrenStates(rootState, true);
-                    c._AfterEnter(null);
+                    state.Enter();
+                    state.LastState = rootState;
+                    state.InitChildrenStates(rootState, true);
+                    state._AfterEnter(null);
                 }
                 else
                 {
-                    c.InitChildrenStates(rootState, false);
+                    state.InitChildrenStates(rootState, false);
                 }
             }
         }
     }
 
+    /// 更新已激活的子孙状态
     protected void UpdateActiveStates(float delta)
     {
         if (IsDisabled)
@@ -516,6 +518,7 @@ public class State : Node
         StateInUpdate = false;
     }
     
+    /// 防止本帧内此状态的全部子状态再次发生改变。
     protected void ResetDoneThisFrame(bool newDone)
     {
         DoneForThisFrame = newDone;
@@ -535,6 +538,7 @@ public class State : Node
     // PRIVATE FUNCTIONS
     //
     
+    /// 设置是否禁用状态，并且触发对应的信号。
     private void SetDisabled(bool newDisabled)
     {
         IsDisabled = newDisabled;
@@ -542,26 +546,31 @@ public class State : Node
         SetDisabledChildren(newDisabled);
     }
 
+    /// 设置子节点是否禁用状态，并且触发对应的信号。
     private void SetDisabledChildren(bool newDisabled)
     {
-        foreach (dynamic c in GetChildren())
+        foreach (var c in GetChildren())
         {
-            c.SetDisabled(newDisabled);
+            if (c is State<TTarget> state)
+            {
+                state.SetDisabled(newDisabled);
+            }
         }
     }
 
-    // 取得旧/新节点的的公共父节点
-    private State GetCommonRoot(State newStateNode)
+    /// 取得旧/新节点的的公共父节点
+    private State<TTarget> GetCommonRoot(State<TTarget> newStateNode)
     {
         var result = newStateNode;
         while (result.Status != StatusType.Active && !result.IsRoot())
         {
-            result = result.GetParent<State>();
+            result = result.GetParent<State<TTarget>>();
         }
 
         return result;
     }
 
+    /// 如果已激活，更新状态并且发信号
     private void Update(float delta)
     {
         if (Status == StatusType.Active)
@@ -570,7 +579,8 @@ public class State : Node
             EmitSignal(nameof(StateUpdated), this);
         }
     }
-
+ 
+    /// 进入状态（激活）
     private void Enter(dynamic args = null)
     {
         if (IsDisabled)
@@ -593,9 +603,12 @@ public class State : Node
         {
             foreach (dynamic c in GetChildren())
             {
-                c.Status = StatusType.Entering;
-                c.ChangeChildrenStatusToEntering(newStatePath);
-                return;
+                if (c.GetClass() == "State")
+                {
+                    c.Status = StatusType.Entering;
+                    c.ChangeChildrenStatusToEntering(newStatePath);
+                    return;
+                }
             }
         }
 
@@ -605,11 +618,14 @@ public class State : Node
         {
             foreach (dynamic c in GetChildren())
             {
-                var currentName = newStatePath.GetName(currentLvl);
-                if (c.GetClass() == "State" && c.Name == currentName)
+                if (c.GetClass() == "State")
                 {
-                    c.Status = StatusType.Entering;
-                    c.ChangeChildrenStatusToEntering(newStatePath);
+                    var currentName = newStatePath.GetName(currentLvl);
+                    if (c.GetClass() == "State" && c.Name == currentName)
+                    {
+                        c.Status = StatusType.Entering;
+                        c.ChangeChildrenStatusToEntering(newStatePath);
+                    }
                 }
             }
         }
@@ -617,8 +633,8 @@ public class State : Node
         {
             if (GetChildCount() > 0)
             {
-                var c = GetChild<State>(0);
-                if (GetChild<State>(0).GetClass() == "State")
+                var c = GetChild<dynamic>(0);
+                if (GetChild<dynamic>(0).GetClass() == "State")
                 {
                     c.Status = StatusType.Entering;
                     c.ChangeChildrenStatusToEntering(newStatePath);
@@ -637,15 +653,16 @@ public class State : Node
         // enter all ENTERING substates
         foreach (dynamic c in GetChildren())
         {
-            if (c.GetClass() == "State" && c.Status == StatusType.Entering)
+            if (c is State<TTarget> state && state.Status == StatusType.Entering)
             {
-                c.Enter(argsOnEnter);
-                c.EnterChildren(argsOnEnter, argsAfterEnter);
-                c._AfterEnter(argsAfterEnter);
+                state.Enter(argsOnEnter);
+                state.EnterChildren(argsOnEnter, argsAfterEnter);
+                state._AfterEnter(argsAfterEnter);
             }
         }
     }
 
+    /// 退出状态
     private void Exit(dynamic args = null)
     {
         DelTimers();
@@ -665,18 +682,21 @@ public class State : Node
         {
             foreach (dynamic c in GetChildren())
             {
-                c.Status = StatusType.Exiting;
-                c.ChangeChildrenStatusToExiting();
+                if (c is State<TTarget> state)
+                {
+                    state.Status = StatusType.Exiting;
+                    state.ChangeChildrenStatusToExiting();
+                }
             }
         }
         else
         {
-            foreach (dynamic c in GetChildren())
+            foreach (var c in GetChildren())
             {
-                if (c.GetClass() == "State" && c.Status != StatusType.Inactive)
+                if (c is State<TTarget> state && state.Status != StatusType.Inactive)
                 {
-                    c.Status = StatusType.Exiting;
-                    c.ChangeChildrenStatusToExiting();
+                    state.Status = StatusType.Exiting;
+                    state.ChangeChildrenStatusToExiting();
                 }
             }
         }
@@ -685,13 +705,13 @@ public class State : Node
 
     private void ExitChildren(dynamic argsBeforeExit = null, dynamic argsOnExit = null)
     {
-        foreach (dynamic c in GetChildren())
+        foreach (var c in GetChildren())
         {
-            if (c.GetClass() == "State" && c.Status == StatusType.Exiting)
+            if (c is State<TTarget> state && state.Status == StatusType.Exiting)
             {
-                c._BeforeExit(argsBeforeExit);
-                c.ExitChildren();
-                c.Exit(argsOnExit);
+                state._BeforeExit(argsBeforeExit);
+                state.ExitChildren();
+                state.Exit(argsOnExit);
             }
         }
     }
@@ -701,16 +721,16 @@ public class State : Node
     {
         foreach (dynamic c in GetChildren())
         {
-            if (c.GetClass() == "State")
+            if (c is State<TTarget> state)
             {
-                c.Status = StatusType.Inactive;
-                c.ResetChildrenStatus();
+                state.Status = StatusType.Inactive;
+                state.ResetChildrenStatus();
             }
         }
     }
 
     // 根据节点名称获取状态节点（需要处理重名的情况）
-    private State FindStateNode(string newState)
+    private State<TTarget> FindStateNode(string newState)
     {
         if (Name == newState)
         {

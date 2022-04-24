@@ -1,0 +1,462 @@
+[gd_scene load_steps=37 format=2]
+
+[ext_resource path="res://module/xsm/example/colors/Green.cs" type="Script" id=1]
+[ext_resource path="res://module/xsm/example/movement/OnGround.cs" type="Script" id=2]
+[ext_resource path="res://module/xsm/example/movement/Jump.cs" type="Script" id=3]
+[ext_resource path="res://module/xsm/example/movement/Crouch.cs" type="Script" id=4]
+[ext_resource path="res://module/xsm/example/movement/Idle.cs" type="Script" id=5]
+[ext_resource path="res://module/xsm/example/movement/Fall.cs" type="Script" id=6]
+[ext_resource path="res://module/xsm/example/movement/InAir.cs" type="Script" id=7]
+[ext_resource path="res://module/xsm/example/colors/RegionColor.cs" type="Script" id=8]
+[ext_resource path="res://module/xsm/example/StateRootNew.cs" type="Script" id=9]
+[ext_resource path="res://module/xsm/example/movement/Movement.cs" type="Script" id=10]
+[ext_resource path="res://module/xsm/example/movement/Walk.cs" type="Script" id=11]
+[ext_resource path="res://module/xsm/example/movement/Land.cs" type="Script" id=12]
+[ext_resource path="res://module/xsm/example/colors/Purple.cs" type="Script" id=13]
+[ext_resource path="res://module/xsm/example/colors/Orange.cs" type="Script" id=14]
+[ext_resource path="res://module/xsm/example/Player.cs" type="Script" id=15]
+[ext_resource path="res://addons/xsm/example/old_example/assets/slime.png" type="Texture" id=16]
+[ext_resource path="res://addons/xsm/example/old_example/assets/grass.png" type="Texture" id=17]
+[ext_resource path="res://addons/xsm/example/old_example/assets/font_TIMESS__.ttf" type="DynamicFontData" id=18]
+[ext_resource path="res://module/xsm/example/Example.cs" type="Script" id=19]
+
+[sub_resource type="CircleShape2D" id=1]
+radius = 11.2744
+
+[sub_resource type="Animation" id=2]
+resource_name = "Brake"
+length = 0.02
+loop = true
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 6 ]
+}
+
+[sub_resource type="Animation" id=3]
+length = 0.02
+loop = true
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 3 ]
+}
+
+[sub_resource type="Animation" id=4]
+resource_name = "Fall"
+length = 0.02
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 4 ]
+}
+
+[sub_resource type="Animation" id=5]
+length = 0.02
+loop = true
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 4 ]
+}
+
+[sub_resource type="Animation" id=6]
+resource_name = "GreenToPurple"
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 0,
+"values": [ Color( 0.0862745, 0.513726, 0.0941176, 1 ), Color( 0.517647, 0.0784314, 0.85098, 1 ) ]
+}
+
+[sub_resource type="Animation" id=7]
+length = 0.02
+loop = true
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 0 ]
+}
+
+[sub_resource type="Animation" id=8]
+length = 0.12
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.08 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 1,
+"values": [ 3, 4 ]
+}
+
+[sub_resource type="Animation" id=9]
+length = 0.1
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 3 ]
+}
+tracks/1/type = "method"
+tracks/1/path = NodePath("StateRoot/RegionMovement/OnGround/Land")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0.1 ),
+"transitions": PoolRealArray( 1 ),
+"values": [ {
+"args": [  ],
+"method": "OnLandFinished"
+} ]
+}
+
+[sub_resource type="Animation" id=10]
+resource_name = "OrangeToGreen"
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 0,
+"values": [ Color( 0.933333, 0.556863, 0.156863, 1 ), Color( 0.0862745, 0.513726, 0.0941176, 1 ) ]
+}
+
+[sub_resource type="Animation" id=11]
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 0,
+"values": [ Color( 0.517647, 0.0784314, 0.85098, 1 ), Color( 0.933333, 0.556863, 0.156863, 1 ) ]
+}
+
+[sub_resource type="Animation" id=12]
+length = 0.02
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 5 ]
+}
+
+[sub_resource type="Animation" id=13]
+length = 0.2
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.04, 0.16 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 1,
+"values": [ 0, 1, 0 ]
+}
+tracks/1/type = "method"
+tracks/1/path = NodePath("StateRoot/RegionMovement/InAir/Fall")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0.2 ),
+"transitions": PoolRealArray( 1 ),
+"values": [ {
+"args": [  ],
+"method": "OnTopCurveFinished"
+} ]
+}
+
+[sub_resource type="Animation" id=14]
+length = 0.02
+loop = true
+step = 0.02
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ 1 ]
+}
+
+[sub_resource type="RectangleShape2D" id=15]
+extents = Vector2( 2048, 10 )
+
+[sub_resource type="RectangleShape2D" id=16]
+extents = Vector2( 100, 5 )
+
+[sub_resource type="DynamicFont" id=17]
+size = 20
+font_data = ExtResource( 18 )
+
+[node name="Example" type="Node2D"]
+script = ExtResource( 19 )
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2( 512, 300 )
+current = true
+
+[node name="Player" type="KinematicBody2D" parent="."]
+position = Vector2( 435, 292 )
+script = ExtResource( 15 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+visible = false
+shape = SubResource( 1 )
+
+[node name="Sprite" type="Sprite" parent="Player"]
+modulate = Color( 0.763921, 0.548236, 0.144314, 1 )
+texture = ExtResource( 16 )
+hframes = 7
+frame = 4
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Player"]
+anims/Brake = SubResource( 2 )
+anims/Crouch = SubResource( 3 )
+anims/Fall = SubResource( 4 )
+anims/FlyUp = SubResource( 5 )
+anims/GreenToPurple = SubResource( 6 )
+anims/Idle = SubResource( 7 )
+anims/Jump = SubResource( 8 )
+anims/Land = SubResource( 9 )
+anims/OrangeToGreen = SubResource( 10 )
+anims/PurpleToOrange = SubResource( 11 )
+anims/Run = SubResource( 12 )
+anims/TopCurve = SubResource( 13 )
+anims/Walk = SubResource( 14 )
+
+[node name="StateRoot" type="Node" parent="Player"]
+script = ExtResource( 9 )
+HasRegions = true
+DebugMode = true
+AnimationPlayer = NodePath("../AnimationPlayer")
+SyncMode = 1
+FsmOwner = NodePath("..")
+
+[node name="RegionMovement" type="Node" parent="Player/StateRoot"]
+script = ExtResource( 10 )
+DebugMode = true
+
+[node name="InAir" type="Node" parent="Player/StateRoot/RegionMovement"]
+script = ExtResource( 7 )
+DebugMode = true
+
+[node name="Fall" type="Node" parent="Player/StateRoot/RegionMovement/InAir"]
+script = ExtResource( 6 )
+DebugMode = true
+
+[node name="Jump" type="Node" parent="Player/StateRoot/RegionMovement/InAir"]
+script = ExtResource( 3 )
+DebugMode = true
+
+[node name="OnGround" type="Node" parent="Player/StateRoot/RegionMovement"]
+script = ExtResource( 2 )
+DebugMode = true
+
+[node name="Idle" type="Node" parent="Player/StateRoot/RegionMovement/OnGround"]
+script = ExtResource( 5 )
+DebugMode = true
+
+[node name="Land" type="Node" parent="Player/StateRoot/RegionMovement/OnGround"]
+script = ExtResource( 12 )
+DebugMode = true
+
+[node name="Walk" type="Node" parent="Player/StateRoot/RegionMovement/OnGround"]
+script = ExtResource( 11 )
+DebugMode = true
+
+[node name="Crouch" type="Node" parent="Player/StateRoot/RegionMovement/OnGround"]
+script = ExtResource( 4 )
+DebugMode = true
+
+[node name="RegionColor" type="Node" parent="Player/StateRoot"]
+script = ExtResource( 8 )
+
+[node name="Purple" type="Node" parent="Player/StateRoot/RegionColor"]
+script = ExtResource( 13 )
+
+[node name="Green" type="Node" parent="Player/StateRoot/RegionColor"]
+script = ExtResource( 1 )
+
+[node name="Orange" type="Node" parent="Player/StateRoot/RegionColor"]
+script = ExtResource( 14 )
+
+[node name="Platforms" type="Node2D" parent="."]
+position = Vector2( 512, 300 )
+
+[node name="Ground" type="StaticBody2D" parent="Platforms"]
+position = Vector2( -8, 63 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/Ground"]
+position = Vector2( 0, 150 )
+shape = SubResource( 15 )
+
+[node name="Sprite" type="Sprite" parent="Platforms/Ground"]
+position = Vector2( 0, 144 )
+texture = ExtResource( 17 )
+region_enabled = true
+region_rect = Rect2( 0, 0, 4096, 10 )
+
+[node name="Platform1" type="StaticBody2D" parent="Platforms"]
+position = Vector2( 144, 60 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/Platform1"]
+shape = SubResource( 16 )
+one_way_collision = true
+
+[node name="Sprite" type="Sprite" parent="Platforms/Platform1"]
+texture = ExtResource( 17 )
+region_enabled = true
+region_rect = Rect2( 0, 0, 200, 10 )
+
+[node name="Platform2" type="StaticBody2D" parent="Platforms"]
+position = Vector2( -234, -15 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/Platform2"]
+shape = SubResource( 16 )
+one_way_collision = true
+
+[node name="Sprite" type="Sprite" parent="Platforms/Platform2"]
+texture = ExtResource( 17 )
+region_enabled = true
+region_rect = Rect2( 0, 0, 200, 10 )
+
+[node name="Platform3" type="StaticBody2D" parent="Platforms"]
+position = Vector2( 345, -59 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/Platform3"]
+shape = SubResource( 16 )
+one_way_collision = true
+
+[node name="Sprite" type="Sprite" parent="Platforms/Platform3"]
+texture = ExtResource( 17 )
+region_enabled = true
+region_rect = Rect2( 0, 0, 200, 10 )
+
+[node name="Platform4" type="StaticBody2D" parent="Platforms"]
+position = Vector2( 13, -134 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/Platform4"]
+shape = SubResource( 16 )
+one_way_collision = true
+
+[node name="Sprite" type="Sprite" parent="Platforms/Platform4"]
+texture = ExtResource( 17 )
+region_enabled = true
+region_rect = Rect2( 0, 0, 200, 10 )
+
+[node name="GUI" type="MarginContainer" parent="."]
+margin_right = 454.0
+margin_bottom = 153.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MarginContainer" type="MarginContainer" parent="GUI"]
+margin_right = 454.0
+margin_bottom = 153.0
+custom_constants/margin_top = 10
+custom_constants/margin_left = 20
+
+[node name="Explanation" type="Label" parent="GUI/MarginContainer"]
+visible = false
+margin_left = 20.0
+margin_top = 18.0
+margin_right = 474.0
+margin_bottom = 145.0
+custom_fonts/font = SubResource( 17 )
+text = "This plugin is kind of an implementation of StateCharts
+You should README.md  to learn how to use it
+
+Arrows to move, Space to jump,
+Ctrl and Shift to change color"
+
+[node name="Show" type="Button" parent="."]
+margin_left = 850.0
+margin_top = 24.0
+margin_right = 996.0
+margin_bottom = 70.0
+text = "Show"
